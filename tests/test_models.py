@@ -22,3 +22,11 @@ def test_nuscrool_home_respects_env(tmp_path):
         assert home.is_dir()
     finally:
         del os.environ["NUSCROOL_HOME"]
+
+
+def test_nuscrool_home_defaults_to_dotfile(monkeypatch, tmp_path):
+    monkeypatch.delenv("NUSCROOL_HOME", raising=False)
+    monkeypatch.setattr("nuscrool.paths.Path.home", lambda: tmp_path)
+    home = nuscrool_home()
+    assert home == tmp_path / ".nuscrool"
+    assert home.is_dir()
