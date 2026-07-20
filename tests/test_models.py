@@ -1,0 +1,24 @@
+import os
+
+from nuscrool import models
+from nuscrool.paths import nuscrool_home
+
+
+def test_models_construct():
+    entry = models.PlannerEntry("CS2100", "Y1S1", (0, 1, 1, "CS2100"))
+    review = models.Review("Alice", "2024-01-01T00:00:00", "great mod", 3)
+    mr = models.ModuleReviews("CS2100", "Computer Organisation", "Y1S1", [review])
+    assert entry.module_code == "CS2100"
+    assert review.likes == 3
+    assert mr.reviews[0].author == "Alice"
+    assert mr.error is None
+
+
+def test_nuscrool_home_respects_env(tmp_path):
+    os.environ["NUSCROOL_HOME"] = str(tmp_path / "home")
+    try:
+        home = nuscrool_home()
+        assert home == tmp_path / "home"
+        assert home.is_dir()
+    finally:
+        del os.environ["NUSCROOL_HOME"]
