@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from nuscrool import metadata
@@ -35,5 +37,12 @@ def test_fetch_titles_maps_and_caches(home):
 def test_fetch_titles_network_error_returns_empty(home):
     def boom(url):
         raise OSError("no network")
+
+    assert metadata.fetch_titles("2026-2027", now=1.0, fetch_json=boom) == {}
+
+
+def test_fetch_titles_malformed_json_returns_empty(home):
+    def boom(url):
+        raise json.JSONDecodeError("bad json", "doc", 0)
 
     assert metadata.fetch_titles("2026-2027", now=1.0, fetch_json=boom) == {}

@@ -47,7 +47,7 @@ def fetch_titles(
     url = f"{_BASE}/{acad_year}/moduleList.json"
     try:
         modules = fetch_json(url)
-    except OSError:
+    except (OSError, json.JSONDecodeError):
         return {}
 
     titles = {m["moduleCode"]: m.get("title", "") for m in modules}

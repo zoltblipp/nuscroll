@@ -1,6 +1,8 @@
 """Assemble ModuleReviews from planner entries, cache, and Disqus."""
 from __future__ import annotations
 
+import json
+
 from nuscrool import cache as cache_mod
 from nuscrool import disqus
 from nuscrool.disqus import DisqusError
@@ -40,7 +42,7 @@ def build_module_reviews(
             reviews: list[Review] = fetch(code, api_key)
             write_cache(code, reviews, now)
             results.append(ModuleReviews(code, title, entry.label, reviews))
-        except (DisqusError, OSError) as exc:
+        except (DisqusError, OSError, json.JSONDecodeError) as exc:
             try:
                 fallback = read_cache(code, _STALE_TTL, now)
             except OSError:

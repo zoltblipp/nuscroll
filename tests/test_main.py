@@ -38,3 +38,19 @@ def test_main_bad_path_returns_error(tmp_path, capsys):
     rc = cli.main(["--file", str(tmp_path / "missing.json")])
     assert rc == 1
     assert "not found" in capsys.readouterr().out.lower()
+
+
+def test_main_malformed_json_returns_error(tmp_path, capsys):
+    path = tmp_path / "bad.json"
+    path.write_text("{not valid json")
+    rc = cli.main(["--file", str(path)])
+    assert rc == 1
+    assert "parse" in capsys.readouterr().out.lower()
+
+
+def test_main_no_modules_returns_error(tmp_path, capsys):
+    path = tmp_path / "empty.json"
+    path.write_text(json.dumps({"minYear": "2026/2027", "modules": {}}))
+    rc = cli.main(["--file", str(path)])
+    assert rc == 1
+    assert "no modules" in capsys.readouterr().out.lower()

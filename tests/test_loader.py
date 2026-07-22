@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from nuscrool import loader
@@ -110,3 +112,19 @@ def test_double_fault_fallback_read_also_fails_does_not_abort():
     assert out[0].error is not None
     assert out[1].reviews == []
     assert out[1].error is not None
+
+
+def test_malformed_json_sets_error_and_continues():
+    def read_cache(code, ttl_seconds, now):
+        return None
+
+    def fetch(code, key, **kw):
+        raise json.JSONDecodeError("bad json", "doc", 0)
+
+    out = loader.build_module_reviews(
+        [_entry("CS2100"), _entry("CS1010")], {}, "KEY", now=1.0,
+        read_cache=read_cache, fetch=fetch, write_cache=lambda *a, **k: None,
+    )
+    assert len(out) == 2
+    assert all(m.error is not None for m in out)
+    assert out[0].reviews == []
