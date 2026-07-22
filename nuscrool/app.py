@@ -28,7 +28,7 @@ def semester_labels(modules: list[ModuleReviews]) -> list[str]:
 def _render_module(m: ModuleReviews) -> str:
     title = f" — {m.title}" if m.title else ""
     header = f"[b]{m.module_code}{title}[/b]  [dim]{m.label}[/dim]  ({len(m.reviews)} reviews)"
-    lines = [header, "─" * 60]
+    lines = [header]
     if m.error:
         lines.append(f"[red]fetch failed: {m.error}[/red]")
     if not m.reviews:
@@ -70,7 +70,8 @@ class NUScroolApp(App):
     def _stream_text(self, mods: list[ModuleReviews]) -> str:
         if not mods:
             return "[dim]No modules match this filter.[/dim]"
-        return "\n\n".join(_render_module(m) for m in mods)
+        separator = "\n" + "─" * 60 + "\n\n"
+        return separator.join(_render_module(m) for m in mods)
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         item_id = event.item.id or "all"
