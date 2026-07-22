@@ -29,3 +29,16 @@ def test_write_then_read_fresh(home):
 def test_read_stale_returns_none(home):
     cache.write_cache("CS2100", _reviews(), now=1000.0)
     assert cache.read_cache("CS2100", ttl_seconds=100, now=1000.0 + 200) is None
+
+
+def test_read_unexpected_shape_returns_none(home, tmp_path):
+    import json
+
+    path = tmp_path / "cache" / "CS2100.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "fetchedAt": 1000.0,
+        "posts": [{"author": "Bob", "unexpectedField": "oops"}],
+    }
+    path.write_text(json.dumps(payload))
+    assert cache.read_cache("CS2100", ttl_seconds=86400, now=1000.0 + 10) is None

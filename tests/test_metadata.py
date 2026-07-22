@@ -46,3 +46,11 @@ def test_fetch_titles_malformed_json_returns_empty(home):
         raise json.JSONDecodeError("bad json", "doc", 0)
 
     assert metadata.fetch_titles("2026-2027", now=1.0, fetch_json=boom) == {}
+
+
+def test_fetch_titles_unexpected_shape_returns_empty(home):
+    def wrong_shape(url):
+        # Missing "moduleCode" key triggers a KeyError when building titles.
+        return [{"title": "Computer Organisation"}]
+
+    assert metadata.fetch_titles("2026-2027", now=1.0, fetch_json=wrong_shape) == {}

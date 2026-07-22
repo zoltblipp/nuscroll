@@ -47,11 +47,10 @@ def fetch_titles(
     url = f"{_BASE}/{acad_year}/moduleList.json"
     try:
         modules = fetch_json(url)
-    except (OSError, json.JSONDecodeError):
+        titles = {m["moduleCode"]: m.get("title", "") for m in modules}
+        _cache_path(acad_year).write_text(
+            json.dumps({"fetchedAt": now, "titles": titles})
+        )
+    except (OSError, json.JSONDecodeError, KeyError, TypeError):
         return {}
-
-    titles = {m["moduleCode"]: m.get("title", "") for m in modules}
-    _cache_path(acad_year).write_text(
-        json.dumps({"fetchedAt": now, "titles": titles})
-    )
     return titles

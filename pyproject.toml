@@ -2,7 +2,7 @@
 name = "nuscrool"
 version = "0.1.0"
 description = "Scroll NUS course reviews in the terminal"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 dependencies = ["textual>=0.60"]
 
 [project.optional-dependencies]

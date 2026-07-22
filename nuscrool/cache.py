@@ -29,7 +29,10 @@ def read_cache(module_code: str, ttl_seconds: int, now: float) -> list[Review] |
     fetched_at = data.get("fetchedAt", 0)
     if now - fetched_at > ttl_seconds:
         return None
-    return [Review(**post) for post in data.get("posts", [])]
+    try:
+        return [Review(**post) for post in data.get("posts", [])]
+    except (TypeError, KeyError):
+        return None
 
 
 def write_cache(module_code: str, reviews: list[Review], now: float) -> None:

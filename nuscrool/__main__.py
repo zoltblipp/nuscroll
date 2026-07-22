@@ -15,12 +15,16 @@ from nuscrool.planner import parse_planner
 _REGISTER_URL = "https://disqus.com/api/applications/"
 
 
-def resolve_planner_path(argv: list[str], input_fn=input) -> str:
+def _build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="nuscrool", add_help=False)
     parser.add_argument("--file", dest="file")
     parser.add_argument("positional", nargs="?")
     parser.add_argument("--refresh", action="store_true")
-    known, _ = parser.parse_known_args(argv)
+    return parser
+
+
+def resolve_planner_path(argv: list[str], input_fn=input) -> str:
+    known, _ = _build_arg_parser().parse_known_args(argv)
     path = known.file or known.positional
     if not path:
         path = input_fn("Path to NUSMods planner JSON: ").strip()
@@ -39,7 +43,7 @@ def ensure_api_key(input_fn=input, get=config.get_api_key, set_=config.set_api_k
 
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
-    refresh = "--refresh" in argv
+    refresh = _build_arg_parser().parse_known_args(argv)[0].refresh
 
     path = resolve_planner_path(argv)
     planner_file = Path(path)

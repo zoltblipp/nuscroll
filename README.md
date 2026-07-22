@@ -21,6 +21,9 @@ NUScrool reads reviews via the Disqus API, which needs a free public key:
 3. Run `nuscrool` — it will prompt for the key on first run and store it in
    `~/.nuscrool/config.json`.
 
+   Note: the key is stored in plaintext at `~/.nuscrool/config.json`. This is fine
+   because it's a public, read-only API key, not a secret credential.
+
 ## Get your planner JSON
 
 On <https://nusmods.com> open the **Planner**, then export/download your plan as JSON
