@@ -41,7 +41,10 @@ def build_module_reviews(
             write_cache(code, reviews, now)
             results.append(ModuleReviews(code, title, entry.label, reviews))
         except (DisqusError, OSError) as exc:
-            fallback = read_cache(code, _STALE_TTL, now)
+            try:
+                fallback = read_cache(code, _STALE_TTL, now)
+            except OSError:
+                fallback = None
             results.append(
                 ModuleReviews(
                     code, title, entry.label,
