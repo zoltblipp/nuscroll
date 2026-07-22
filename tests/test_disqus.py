@@ -51,3 +51,18 @@ def test_fetch_reviews_raises_on_api_error():
     with pytest.raises(DisqusError) as exc:
         fetch_reviews("CS2100", "BAD", fetch_json=fake_fetch)
     assert exc.value.code == 5
+
+
+def test_fetch_reviews_handles_null_author():
+    def fake_fetch(url):
+        return {
+            "code": 0,
+            "cursor": {"hasNext": False, "next": None},
+            "response": [
+                {"message": "<p>hi</p>", "author": None,
+                 "createdAt": "2024-01-01T00:00:00", "likes": 0, "isDeleted": False},
+            ],
+        }
+
+    reviews = fetch_reviews("CS2100", "KEY", fetch_json=fake_fetch)
+    assert reviews[0].author == "anonymous"

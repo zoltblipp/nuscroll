@@ -81,7 +81,7 @@ def fetch_reviews(
                 continue
             reviews.append(
                 Review(
-                    author=post.get("author", {}).get("name", "anonymous"),
+                    author=(post.get("author") or {}).get("name", "anonymous"),
                     created_at=post.get("createdAt", ""),
                     message=html_to_text(post.get("message", "")),
                     likes=post.get("likes", 0),
