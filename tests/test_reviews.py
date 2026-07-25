@@ -23,6 +23,12 @@ class _Harness(App):
         self.push_screen(ReviewsScreen(self.modules))
 
 
+def _stream_content(app) -> str:
+    """Join text from every per-module Static block (see ReviewsScreen._refresh_stream)."""
+    blocks = app.screen.query(".module-block")
+    return "\n".join(str(b.content) for b in blocks)
+
+
 @pytest.mark.asyncio
 async def test_app_boots_and_shows_headers():
     app = _Harness(_mods())
@@ -39,14 +45,13 @@ async def test_selecting_semester_filters_stream():
     async with app.run_test() as pilot:
         await pilot.pause()
         sem_list = app.screen.query_one("#f-sem", SelectionList)
-        stream = app.screen.query_one("#stream", Static)
         sem_list.focus()
         sem_list.highlighted = [o.value for o in sem_list._options].index("Y1S1")
         await pilot.pause()
         await pilot.press("space")
         await pilot.pause()
 
-        content = stream.content
+        content = _stream_content(app)
         assert "CS2100" in content
         assert "MA1521" in content
         assert "CS2251" not in content
@@ -58,7 +63,6 @@ async def test_selecting_two_semesters_ors_within_facet():
     async with app.run_test() as pilot:
         await pilot.pause()
         sem_list = app.screen.query_one("#f-sem", SelectionList)
-        stream = app.screen.query_one("#stream", Static)
         sem_list.focus()
         for label in ("Y1S1", "Y2S1"):
             sem_list.highlighted = [o.value for o in sem_list._options].index(label)
@@ -66,7 +70,7 @@ async def test_selecting_two_semesters_ors_within_facet():
             await pilot.press("space")
             await pilot.pause()
 
-        content = stream.content
+        content = _stream_content(app)
         assert "CS2100" in content
         assert "MA1521" in content
         assert "CS2251" in content
@@ -79,7 +83,6 @@ async def test_and_across_facets_prefix_and_semester():
         await pilot.pause()
         sem_list = app.screen.query_one("#f-sem", SelectionList)
         prefix_list = app.screen.query_one("#f-prefix", SelectionList)
-        stream = app.screen.query_one("#stream", Static)
 
         sem_list.focus()
         sem_list.highlighted = [o.value for o in sem_list._options].index("Y1S1")
@@ -93,7 +96,7 @@ async def test_and_across_facets_prefix_and_semester():
         await pilot.press("space")
         await pilot.pause()
 
-        content = stream.content
+        content = _stream_content(app)
         assert "CS2100" in content
         assert "MA1521" not in content
         assert "CS2251" not in content
@@ -105,14 +108,13 @@ async def test_selecting_module_filters_stream_to_single_module():
     async with app.run_test() as pilot:
         await pilot.pause()
         module_list = app.screen.query_one("#module-list", ListView)
-        stream = app.screen.query_one("#stream", Static)
         module_list.focus()
         module_list.index = [i.id for i in module_list.children].index("mod-CS2100")
         await pilot.pause()
         await pilot.press("enter")
         await pilot.pause()
 
-        content = stream.content
+        content = _stream_content(app)
         assert "CS2100" in content
         assert "MA1521" not in content
         assert "CS2251" not in content
@@ -124,19 +126,19 @@ async def test_clear_filters_resets_to_all():
     async with app.run_test() as pilot:
         await pilot.pause()
         sem_list = app.screen.query_one("#f-sem", SelectionList)
-        stream = app.screen.query_one("#stream", Static)
         sem_list.focus()
         sem_list.highlighted = [o.value for o in sem_list._options].index("Y1S1")
         await pilot.pause()
         await pilot.press("space")
         await pilot.pause()
-        assert "CS2251" not in stream.content
+        assert "CS2251" not in _stream_content(app)
 
         await pilot.press("c")
         await pilot.pause()
 
-        assert "CS2251" in stream.content
-        assert "CS2100" in stream.content
+        content = _stream_content(app)
+        assert "CS2251" in content
+        assert "CS2100" in content
 
 
 @pytest.mark.asyncio

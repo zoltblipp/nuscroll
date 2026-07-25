@@ -54,9 +54,11 @@ async def test_explicit_path_flows_through_loading_into_reviews(
         await pilot.pause()
 
         assert isinstance(app.screen, ReviewsScreen)
-        stream = app.screen.query_one("#stream", Static)
-        assert "CS2100" in stream.content
-        assert "MA1521" in stream.content
+        content = "\n".join(
+            str(b.content) for b in app.screen.query(".module-block")
+        )
+        assert "CS2100" in content
+        assert "MA1521" in content
 
 
 @pytest.mark.asyncio

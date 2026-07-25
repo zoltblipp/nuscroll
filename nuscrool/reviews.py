@@ -36,6 +36,8 @@ class ReviewsScreen(Screen):
     CSS = """
     #sidebar { width: 28; border-right: solid $accent; }
     #stream { padding: 1 2; }
+    #stream-status { color: $text-muted; padding-bottom: 1; }
+    .module-block { margin-bottom: 1; border-bottom: solid $accent 30%; padding-bottom: 1; }
     #sidebar SelectionList { height: auto; max-height: 8; }
     #sidebar Label { padding: 1 1 0 1; text-style: bold; }
     """
@@ -74,22 +76,34 @@ class ReviewsScreen(Screen):
                 for m in self.modules:
                     items.append(ListItem(Label(m.module_code), id=f"mod-{m.module_code}"))
                 yield ListView(*items, id="module-list")
-            with VerticalScroll():
-                yield Static(self._stream_text(self.modules), id="stream", markup=True)
+            with VerticalScroll(id="stream"):
+                yield Label("", id="stream-status")
         yield Footer()
 
-    def _stream_text(self, mods: list[ModuleReviews]) -> str:
-        if not mods:
-            return "[dim]No modules match this filter.[/dim]"
-        status = f"[dim]showing {len(mods)} of {len(self.modules)} modules[/dim]\n\n"
-        separator = "\n" + "─" * 60 + "\n\n"
-        return status + separator.join(_render_module(m) for m in mods)
+    async def on_mount(self) -> None:
+        await self._refresh_stream()
 
-    def _refresh_stream(self) -> None:
+    async def _refresh_stream(self) -> None:
+        # One Static per module, not one giant markup string for the whole
+        # stream: a single Static covering hundreds of reviews makes Rich's
+        # markup parsing/layout effectively hang (verified: a 450KB blob
+        # never finished mounting; split per-module it mounts in ~1s).
         shown = apply_filters(self.modules, self.filter_state)
-        self.query_one("#stream", Static).update(self._stream_text(shown))
+        status = self.query_one("#stream-status", Label)
+        stream = self.query_one("#stream", VerticalScroll)
+        await stream.remove_children(".module-block")
 
-    def on_selection_list_selected_changed(
+        if not shown:
+            status.update("[dim]No modules match this filter.[/dim]")
+            return
+
+        status.update(f"[dim]showing {len(shown)} of {len(self.modules)} modules[/dim]")
+        await stream.mount_all(
+            Static(_render_module(m), markup=True, classes="module-block")
+            for m in shown
+        )
+
+    async def on_selection_list_selected_changed(
         self, event: SelectionList.SelectedChanged
     ) -> None:
         self.filter_state = FilterState(
@@ -97,9 +111,9 @@ class ReviewsScreen(Screen):
             prefixes=frozenset(self.query_one("#f-prefix", SelectionList).selected),
             levels=frozenset(self.query_one("#f-level", SelectionList).selected),
         )
-        self._refresh_stream()
+        await self._refresh_stream()
 
-    def on_list_view_selected(self, event: ListView.Selected) -> None:
+    async def on_list_view_selected(self, event: ListView.Selected) -> None:
         item_id = event.item.id or "all"
         if item_id.startswith("mod-"):
             self.filter_state = FilterState(module_code=item_id[4:])
@@ -108,15 +122,15 @@ class ReviewsScreen(Screen):
             self.filter_state = FilterState(
                 semesters=state.semesters, prefixes=state.prefixes, levels=state.levels
             )
-        self._refresh_stream()
+        await self._refresh_stream()
 
     def action_focus_filters(self) -> None:
         self.query_one("#f-sem", SelectionList).focus()
 
-    def action_clear_filters(self) -> None:
+    async def action_clear_filters(self) -> None:
         self.query_one("#f-sem", SelectionList).deselect_all()
         self.query_one("#f-prefix", SelectionList).deselect_all()
         self.query_one("#f-level", SelectionList).deselect_all()
         self.query_one("#module-list", ListView).index = None
         self.filter_state = FilterState()
-        self._refresh_stream()
+        await self._refresh_stream()
