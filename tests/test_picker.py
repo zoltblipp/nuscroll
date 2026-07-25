@@ -1,5 +1,3 @@
-import contextlib
-
 import pytest
 from textual.app import App
 from textual.widgets import Label, ListView
@@ -22,16 +20,6 @@ class _Harness(App):
 
     def on_mount(self) -> None:
         self.push_screen(PickerScreen(error=self._error))
-
-
-@pytest.fixture
-def fake_suspend(monkeypatch):
-    """app.suspend() raises under the headless test driver; stub it out."""
-
-    def _apply(app):
-        monkeypatch.setattr(app, "suspend", lambda: contextlib.nullcontext())
-
-    return _apply
 
 
 @pytest.mark.asyncio
@@ -115,7 +103,7 @@ async def test_delete_removes_profile(home, tmp_path):
 
 @pytest.mark.asyncio
 async def test_browse_opens_native_dialog_and_launches_loading(
-    home, tmp_path, monkeypatch, fake_suspend
+    home, tmp_path, monkeypatch
 ):
     monkeypatch.setattr(LoadingScreen, "_load", lambda self: None)
     plan = tmp_path / "chosen.json"
@@ -125,13 +113,14 @@ async def test_browse_opens_native_dialog_and_launches_loading(
     app = _Harness()
     async with app.run_test() as pilot:
         await pilot.pause()
-        fake_suspend(app)
 
         list_view = app.screen.query_one("#profile-list", ListView)
         list_view.focus()
         list_view.index = [i.id for i in list_view.children].index("browse")
         await pilot.pause()
         await pilot.press("enter")
+        await pilot.pause()
+        await app.workers.wait_for_complete()
         await pilot.pause()
 
         assert isinstance(app.screen, LoadingScreen)
@@ -139,13 +128,12 @@ async def test_browse_opens_native_dialog_and_launches_loading(
 
 
 @pytest.mark.asyncio
-async def test_browse_cancelled_stays_on_picker(home, monkeypatch, fake_suspend):
+async def test_browse_cancelled_stays_on_picker(home, monkeypatch):
     monkeypatch.setattr("nuscrool.picker._pick_file_native", lambda start: None)
 
     app = _Harness()
     async with app.run_test() as pilot:
         await pilot.pause()
-        fake_suspend(app)
 
         list_view = app.screen.query_one("#profile-list", ListView)
         list_view.focus()
@@ -153,14 +141,14 @@ async def test_browse_cancelled_stays_on_picker(home, monkeypatch, fake_suspend)
         await pilot.pause()
         await pilot.press("enter")
         await pilot.pause()
+        await app.workers.wait_for_complete()
+        await pilot.pause()
 
         assert isinstance(app.screen, PickerScreen)
 
 
 @pytest.mark.asyncio
-async def test_repoint_missing_profile_updates_path(
-    home, tmp_path, monkeypatch, fake_suspend
-):
+async def test_repoint_missing_profile_updates_path(home, tmp_path, monkeypatch):
     monkeypatch.setattr(LoadingScreen, "_load", lambda self: None)
     missing = tmp_path / "gone.json"
     profiles.add_profile(str(missing), name="Gone")
@@ -172,7 +160,6 @@ async def test_repoint_missing_profile_updates_path(
     app = _Harness()
     async with app.run_test() as pilot:
         await pilot.pause()
-        fake_suspend(app)
 
         list_view = app.screen.query_one("#profile-list", ListView)
         list_view.focus()
@@ -183,6 +170,8 @@ async def test_repoint_missing_profile_updates_path(
         assert isinstance(app.screen, PickerScreen)
 
         await pilot.press("r")
+        await pilot.pause()
+        await app.workers.wait_for_complete()
         await pilot.pause()
 
         assert isinstance(app.screen, LoadingScreen)

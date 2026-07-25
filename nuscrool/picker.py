@@ -1,32 +1,53 @@
 """Picker screen: choose a saved profile, or browse for a new planner file."""
 from __future__ import annotations
 
+import subprocess
+import sys
 import time
 from pathlib import Path
 
+from textual import work
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Footer, Header, Label, ListItem, ListView
 
 from nuscrool import profiles as profiles_mod
 
+# Runs Tk in its own process so its Cocoa/Tcl run loop never shares a thread
+# with Textual's asyncio loop (in-process tkinter deadlocked on macOS). Also
+# activates itself via osascript so the dialog opens frontmost, since a
+# background subprocess doesn't get window focus by default on macOS.
+_HELPER_SRC = """
+import os, sys, subprocess
+if sys.platform == "darwin":
+    subprocess.run([
+        "osascript", "-e",
+        'tell application "System Events" to set frontmost of every process '
+        f'whose unix id is {os.getpid()} to true',
+    ])
+import tkinter as tk
+from tkinter import filedialog
+root = tk.Tk()
+root.withdraw()
+root.attributes("-topmost", True)
+path = filedialog.askopenfilename(
+    initialdir=sys.argv[1],
+    title="Pick a planner JSON file",
+    filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+)
+root.destroy()
+print(path)
+"""
+
 
 def _pick_file_native(start: Path) -> str | None:
     """Block on a native OS file-open dialog and return the chosen path, or None."""
-    import tkinter as tk
-    from tkinter import filedialog
-
-    root = tk.Tk()
-    root.withdraw()
-    root.attributes("-topmost", True)
-    try:
-        path = filedialog.askopenfilename(
-            initialdir=str(start),
-            title="Pick a planner JSON file",
-            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
-        )
-    finally:
-        root.destroy()
+    result = subprocess.run(
+        [sys.executable, "-c", _HELPER_SRC, str(start)],
+        capture_output=True,
+        text=True,
+    )
+    path = result.stdout.strip()
     return path or None
 
 
@@ -93,9 +114,12 @@ class PickerScreen(Screen):
     def _browse_native(self) -> None:
         downloads = Path.home() / "Downloads"
         start = downloads if downloads.is_dir() else Path.home()
-        with self.app.suspend():
-            path = _pick_file_native(start)
-        self._handle_browsed(path)
+        self._run_picker(start)
+
+    @work(thread=True)
+    def _run_picker(self, start: Path) -> None:
+        path = _pick_file_native(start)
+        self.app.call_from_thread(self._handle_browsed, path)
 
     def _handle_browsed(self, path: str | None) -> None:
         if path is None:

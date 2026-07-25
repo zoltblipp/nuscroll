@@ -1,5 +1,4 @@
 """End-to-end pilot tests wiring NUScroolApp -> LoadingScreen -> ReviewsScreen/PickerScreen."""
-import contextlib
 import json
 
 import pytest
@@ -70,7 +69,6 @@ async def test_zero_arg_picker_to_native_browse_roundtrip(home, tmp_path, monkey
     async with app.run_test() as pilot:
         await pilot.pause()
         assert isinstance(app.screen, PickerScreen)
-        monkeypatch.setattr(app, "suspend", lambda: contextlib.nullcontext())
 
         list_view = app.screen.query_one("#profile-list", ListView)
         labels = [str(i.query_one(Label).content) for i in list_view.children]
@@ -80,6 +78,8 @@ async def test_zero_arg_picker_to_native_browse_roundtrip(home, tmp_path, monkey
         list_view.index = 0
         await pilot.pause()
         await pilot.press("enter")
+        await pilot.pause()
+        await app.workers.wait_for_complete()
         await pilot.pause()
 
         assert isinstance(app.screen, LoadingScreen)
