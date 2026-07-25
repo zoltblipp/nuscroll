@@ -1,10 +1,12 @@
 """End-to-end pilot tests wiring NUScroolApp -> LoadingScreen -> ReviewsScreen/PickerScreen."""
+import contextlib
 import json
 
 import pytest
 from textual.widgets import Label, ListView, SelectionList, Static
 
 from nuscrool.app import NUScroolApp
+from nuscrool.loading import LoadingScreen
 from nuscrool.picker import PickerScreen
 from nuscrool.reviews import ReviewsScreen
 
@@ -59,11 +61,16 @@ async def test_explicit_path_flows_through_loading_into_reviews(
 
 
 @pytest.mark.asyncio
-async def test_zero_arg_picker_to_browse_roundtrip(home):
+async def test_zero_arg_picker_to_native_browse_roundtrip(home, tmp_path, monkeypatch):
+    monkeypatch.setattr(LoadingScreen, "_load", lambda self: None)
+    plan = _write_planner(tmp_path)
+    monkeypatch.setattr("nuscrool.picker._pick_file_native", lambda start: str(plan))
+
     app = NUScroolApp(initial_path=None, refresh=False, api_key="KEY")
     async with app.run_test() as pilot:
         await pilot.pause()
         assert isinstance(app.screen, PickerScreen)
+        monkeypatch.setattr(app, "suspend", lambda: contextlib.nullcontext())
 
         list_view = app.screen.query_one("#profile-list", ListView)
         labels = [str(i.query_one(Label).content) for i in list_view.children]
@@ -75,10 +82,8 @@ async def test_zero_arg_picker_to_browse_roundtrip(home):
         await pilot.press("enter")
         await pilot.pause()
 
-        # BrowseScreen is a modal pushed on top; escape returns to the picker.
-        await pilot.press("escape")
-        await pilot.pause()
-        assert isinstance(app.screen, PickerScreen)
+        assert isinstance(app.screen, LoadingScreen)
+        assert app.screen.path == str(plan)
 
 
 @pytest.mark.asyncio

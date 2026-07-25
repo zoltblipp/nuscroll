@@ -5,43 +5,29 @@ import time
 from pathlib import Path
 
 from textual.app import ComposeResult
-from textual.containers import Vertical
-from textual.screen import ModalScreen, Screen
-from textual.widgets import DirectoryTree, Footer, Header, Label, ListItem, ListView
+from textual.screen import Screen
+from textual.widgets import Footer, Header, Label, ListItem, ListView
 
 from nuscrool import profiles as profiles_mod
 
 
-class _JsonDirectoryTree(DirectoryTree):
-    def filter_paths(self, paths):
-        return [p for p in paths if p.is_dir() or p.suffix == ".json"]
+def _pick_file_native(start: Path) -> str | None:
+    """Block on a native OS file-open dialog and return the chosen path, or None."""
+    import tkinter as tk
+    from tkinter import filedialog
 
-
-class BrowseScreen(ModalScreen[str | None]):
-    BINDINGS = [("escape", "cancel", "Cancel")]
-    CSS = """
-    BrowseScreen { align: center middle; }
-    #browse-box {
-        width: 80%; height: 80%;
-        border: solid $accent; background: $surface; padding: 1 2;
-    }
-    """
-
-    def __init__(self, start: Path | None = None):
-        super().__init__()
-        downloads = Path.home() / "Downloads"
-        self.start = start or (downloads if downloads.is_dir() else Path.home())
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="browse-box"):
-            yield Label("Pick a planner JSON file — Esc to cancel")
-            yield _JsonDirectoryTree(str(self.start), id="tree")
-
-    def on_directory_tree_file_selected(self, event: DirectoryTree.FileSelected) -> None:
-        self.dismiss(str(event.path))
-
-    def action_cancel(self) -> None:
-        self.dismiss(None)
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes("-topmost", True)
+    try:
+        path = filedialog.askopenfilename(
+            initialdir=str(start),
+            title="Pick a planner JSON file",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+        )
+    finally:
+        root.destroy()
+    return path or None
 
 
 class PickerScreen(Screen):
@@ -89,7 +75,7 @@ class PickerScreen(Screen):
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         item_id = event.item.id or ""
         if item_id == "browse":
-            self.app.push_screen(BrowseScreen(), self._handle_browsed)
+            self._browse_native()
             return
 
         index = int(item_id.removeprefix("profile-"))
@@ -104,11 +90,18 @@ class PickerScreen(Screen):
                 "Press r to browse a new location, d to delete."
             )
 
+    def _browse_native(self) -> None:
+        downloads = Path.home() / "Downloads"
+        start = downloads if downloads.is_dir() else Path.home()
+        with self.app.suspend():
+            path = _pick_file_native(start)
+        self._handle_browsed(path)
+
     def _handle_browsed(self, path: str | None) -> None:
         if path is None:
             return
         if self._missing is not None:
-            profiles_mod.add_profile(path, name=self._missing.name, now=time.time())
+            profiles_mod.update_path(self._missing.name, path, time.time())
         self._launch(path)
 
     def _launch(self, path: str) -> None:
@@ -129,7 +122,7 @@ class PickerScreen(Screen):
 
     def action_repoint_missing(self) -> None:
         if self._missing is not None:
-            self.app.push_screen(BrowseScreen(), self._handle_browsed)
+            self._browse_native()
 
     def action_quit(self) -> None:
         self.app.exit()

@@ -80,5 +80,16 @@ def touch_profile(
     set_([_to_dict(p) for p in updated])
 
 
+def update_path(
+    name: str, path: str, now: float, *, get=config.get_profiles, set_=config.set_profiles
+) -> Profile:
+    """Re-point an existing profile at a new path, keeping its identity."""
+    existing = [_from_dict(d) for d in get()]
+    updated_profile = Profile(name, path, now)
+    updated = [updated_profile if p.name == name else p for p in existing]
+    set_([_to_dict(p) for p in updated])
+    return updated_profile
+
+
 def profile_exists_on_disk(p: Profile) -> bool:
     return Path(p.path).is_file()

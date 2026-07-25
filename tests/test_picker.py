@@ -1,10 +1,12 @@
+import contextlib
+
 import pytest
 from textual.app import App
 from textual.widgets import Label, ListView
 
 from nuscrool import profiles
 from nuscrool.loading import LoadingScreen
-from nuscrool.picker import BrowseScreen, PickerScreen
+from nuscrool.picker import PickerScreen
 
 
 @pytest.fixture
@@ -20,6 +22,16 @@ class _Harness(App):
 
     def on_mount(self) -> None:
         self.push_screen(PickerScreen(error=self._error))
+
+
+@pytest.fixture
+def fake_suspend(monkeypatch):
+    """app.suspend() raises under the headless test driver; stub it out."""
+
+    def _apply(app):
+        monkeypatch.setattr(app, "suspend", lambda: contextlib.nullcontext())
+
+    return _apply
 
 
 @pytest.mark.asyncio
@@ -102,17 +114,18 @@ async def test_delete_removes_profile(home, tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_browse_item_pushes_browse_screen(home, monkeypatch):
-    pushed = {}
-
-    def fake_push(screen, callback=None):
-        pushed["screen"] = screen
-        pushed["callback"] = callback
+async def test_browse_opens_native_dialog_and_launches_loading(
+    home, tmp_path, monkeypatch, fake_suspend
+):
+    monkeypatch.setattr(LoadingScreen, "_load", lambda self: None)
+    plan = tmp_path / "chosen.json"
+    plan.write_text("{}")
+    monkeypatch.setattr("nuscrool.picker._pick_file_native", lambda start: str(plan))
 
     app = _Harness()
     async with app.run_test() as pilot:
         await pilot.pause()
-        monkeypatch.setattr(app, "push_screen", fake_push)
+        fake_suspend(app)
 
         list_view = app.screen.query_one("#profile-list", ListView)
         list_view.focus()
@@ -121,7 +134,63 @@ async def test_browse_item_pushes_browse_screen(home, monkeypatch):
         await pilot.press("enter")
         await pilot.pause()
 
-        assert isinstance(pushed.get("screen"), BrowseScreen)
+        assert isinstance(app.screen, LoadingScreen)
+        assert app.screen.path == str(plan)
+
+
+@pytest.mark.asyncio
+async def test_browse_cancelled_stays_on_picker(home, monkeypatch, fake_suspend):
+    monkeypatch.setattr("nuscrool.picker._pick_file_native", lambda start: None)
+
+    app = _Harness()
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        fake_suspend(app)
+
+        list_view = app.screen.query_one("#profile-list", ListView)
+        list_view.focus()
+        list_view.index = [i.id for i in list_view.children].index("browse")
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+
+        assert isinstance(app.screen, PickerScreen)
+
+
+@pytest.mark.asyncio
+async def test_repoint_missing_profile_updates_path(
+    home, tmp_path, monkeypatch, fake_suspend
+):
+    monkeypatch.setattr(LoadingScreen, "_load", lambda self: None)
+    missing = tmp_path / "gone.json"
+    profiles.add_profile(str(missing), name="Gone")
+
+    new_path = tmp_path / "found.json"
+    new_path.write_text("{}")
+    monkeypatch.setattr("nuscrool.picker._pick_file_native", lambda start: str(new_path))
+
+    app = _Harness()
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        fake_suspend(app)
+
+        list_view = app.screen.query_one("#profile-list", ListView)
+        list_view.focus()
+        list_view.index = 0
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+        assert isinstance(app.screen, PickerScreen)
+
+        await pilot.press("r")
+        await pilot.pause()
+
+        assert isinstance(app.screen, LoadingScreen)
+        assert app.screen.path == str(new_path)
+        saved = profiles.list_profiles()
+        assert len(saved) == 1
+        assert saved[0].path == str(new_path)
+        assert saved[0].name == "Gone"
 
 
 @pytest.mark.asyncio

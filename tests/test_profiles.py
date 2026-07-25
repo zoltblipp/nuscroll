@@ -89,6 +89,22 @@ def test_touch_profile_updates_last_used(home, tmp_path):
     assert profiles.list_profiles()[0].last_used == 50.0
 
 
+def test_update_path_keeps_identity(home, tmp_path):
+    old = tmp_path / "old.json"
+    old.write_text("{}")
+    new = tmp_path / "new.json"
+    new.write_text("{}")
+    profiles.add_profile(str(old), name="Main plan", now=1.0)
+
+    profiles.update_path("Main plan", str(new), 2.0)
+
+    out = profiles.list_profiles()
+    assert len(out) == 1
+    assert out[0].name == "Main plan"
+    assert out[0].path == str(new)
+    assert out[0].last_used == 2.0
+
+
 def test_list_profiles_sorted_by_last_used_desc(home, tmp_path):
     a = tmp_path / "a.json"
     a.write_text("{}")
