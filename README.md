@@ -7,9 +7,21 @@ Reviews come from the Disqus threads that power the "Reviews" section on
 
 ## Install
 
+Requires Python 3.14+.
+
 ```bash
+git clone https://github.com/zoltblipp/nuscroll.git
+cd nuscroll
 python3 -m venv .venv
 .venv/bin/pip install -e .
+```
+
+This installs a `nuscroll` command inside `.venv/bin`. Either call it with the
+full path (`.venv/bin/nuscroll`) or put the venv on your `PATH` for the
+session:
+
+```bash
+export PATH="$PWD/.venv/bin:$PATH"
 ```
 
 ## Disqus API key (one-time)
@@ -36,12 +48,22 @@ nuscroll path/to/planner.json      # or: nuscroll --file path/to/planner.json
 nuscroll --refresh planner.json    # ignore cache, re-fetch all modules
 ```
 
-If you omit the path, NUScroll prompts for it.
+If you omit the path, NUScroll opens a picker: pick a previously used planner
+from the list, or browse for a new file via a native OS file dialog. Files you
+open this way are remembered as profiles for next time.
 
 ### Keys
 
+**Picker screen**
+- Arrow / enter — select a profile, or browse for a new file
+- `d` — delete the selected profile
+- `q` — quit
+
+**Reviews screen**
 - Arrow / PgUp / PgDn / wheel — scroll
-- `f` — focus the filter sidebar (pick a semester like `Y1S1`, or a single module)
+- `f` — focus the filter sidebar (semester, module prefix, level, or a single module)
+- `c` — clear all filters
+- `d` — delete the selected module (also removes it from the planner JSON)
 - `q` — quit
 
 Reviews are cached for 24h under `~/.nuscroll/cache/` to minimise Disqus calls.
