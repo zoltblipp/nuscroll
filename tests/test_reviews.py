@@ -6,7 +6,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import ListView, SelectionList, Static
 
 from nuscroll.models import ModuleReviews, Review
-from nuscroll.reviews import ReviewsScreen
+from nuscroll.reviews import _PREVIEW_LIMIT, _render_module, ReviewsScreen
 
 
 def _mods():
@@ -257,3 +257,62 @@ async def test_delete_module_while_jumped_to_it_falls_back_to_all():
         assert "CS2100" not in content
         assert "MA1521" in content
         assert "CS2251" in content
+
+
+def test_render_module_caps_reviews_by_default():
+    reviews = [Review(f"A{i}", "2024", f"msg{i}", 0) for i in range(_PREVIEW_LIMIT + 3)]
+    m = ModuleReviews("CS2100", "Comp Org", "Y1S1", reviews)
+
+    out = _render_module(m)
+
+    assert "msg0" in out
+    assert f"msg{_PREVIEW_LIMIT - 1}" in out
+    assert f"msg{_PREVIEW_LIMIT}" not in out
+    assert "+3 more" in out
+
+
+def test_render_module_full_shows_every_review():
+    reviews = [Review(f"A{i}", "2024", f"msg{i}", 0) for i in range(_PREVIEW_LIMIT + 3)]
+    m = ModuleReviews("CS2100", "Comp Org", "Y1S1", reviews)
+
+    out = _render_module(m, full=True)
+
+    for i in range(len(reviews)):
+        assert f"msg{i}" in out
+    assert "more" not in out
+
+
+def test_render_module_escapes_brackets_in_review_text():
+    # rich.markup.escape() only escapes brackets that actually look like
+    # tag syntax (matching Rich's own parser grammar) -- "[10/10]" is safe
+    # as-is since Rich wouldn't parse it as a tag either way, but something
+    # shaped like "[bold]"/"[/bold]" must be neutralized or it renders styled.
+    m = ModuleReviews(
+        "CS2100", "Comp Org", "Y1S1",
+        [Review("[bold red]hacker[/bold red]", "2024", "nice mod [bold]great[/bold]", 0)],
+    )
+
+    out = _render_module(m)
+
+    assert "[bold red]hacker[/bold red]" not in out
+    assert "\\[bold red]hacker\\[/bold red]" in out
+    assert "nice mod \\[bold]great\\[/bold]" in out
+
+
+@pytest.mark.asyncio
+async def test_all_view_caps_reviews_but_jump_to_shows_full():
+    reviews = [Review(f"A{i}", "2024", f"msg{i}", 0) for i in range(_PREVIEW_LIMIT + 3)]
+    mods = [ModuleReviews("CS2100", "Comp Org", "Y1S1", reviews)]
+    app = _Harness(mods)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        assert f"msg{_PREVIEW_LIMIT}" not in _stream_content(app)
+
+        module_list = app.screen.query_one("#module-list", ListView)
+        module_list.focus()
+        module_list.index = [i.id for i in module_list.children].index("mod-CS2100")
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+
+        assert f"msg{_PREVIEW_LIMIT}" in _stream_content(app)

@@ -1,6 +1,7 @@
 """Reviews screen: faceted filter sidebar + review stream sorted by module."""
 from __future__ import annotations
 
+from rich.markup import escape
 from textual.app import ComposeResult
 from textual.containers import Horizontal, VerticalScroll
 from textual.screen import Screen
@@ -18,18 +19,42 @@ from nuscroll.models import ModuleReviews
 from nuscroll.planner import remove_module
 
 
-def _render_module(m: ModuleReviews) -> str:
-    title = f" — {m.title}" if m.title else ""
-    header = f"[b]{m.module_code}{title}[/b]  [dim]{m.label}[/dim]  ({len(m.reviews)} reviews)"
+# Cap on reviews rendered per module in the combined "all modules" view --
+# without it, browsing everything unfiltered on first load can mean
+# rendering megabytes of markup text in one pass (real-world testing: 52
+# modules / 1355 reviews = 2.3MB, ~3s just to parse, before Textual's own
+# widget-mount overhead on top). A single module viewed via jump-to still
+# gets its full review list.
+_PREVIEW_LIMIT = 5
+
+
+def _render_module(m: ModuleReviews, *, full: bool = False) -> str:
+    # Review text is user-submitted and may contain literal "[" / "]",
+    # which Rich would otherwise parse as markup tags -- escape() prevents
+    # both garbled rendering and pathological parsing on adversarial input.
+    title = f" — {escape(m.title)}" if m.title else ""
+    header = (
+        f"[b]{escape(m.module_code)}{title}[/b]  [dim]{escape(m.label)}[/dim]  "
+        f"({len(m.reviews)} reviews)"
+    )
     lines = [header]
     if m.error:
-        lines.append(f"[red]fetch failed: {m.error}[/red]")
+        lines.append(f"[red]fetch failed: {escape(m.error)}[/red]")
     if not m.reviews:
         lines.append("[dim]No reviews yet[/dim]")
-    for r in m.reviews:
-        lines.append(f"[cyan]{r.author}[/cyan]  [dim]{r.created_at}  ♥ {r.likes}[/dim]")
-        lines.append(r.message)
+
+    shown = m.reviews if full else m.reviews[:_PREVIEW_LIMIT]
+    for r in shown:
+        lines.append(
+            f"[cyan]{escape(r.author)}[/cyan]  [dim]{escape(r.created_at)}  ♥ {r.likes}[/dim]"
+        )
+        lines.append(escape(r.message))
         lines.append("")
+
+    remaining = len(m.reviews) - len(shown)
+    if remaining > 0:
+        lines.append(f"[dim]+{remaining} more — jump to this module to see all[/dim]")
+
     return "\n".join(lines)
 
 
@@ -101,8 +126,9 @@ class ReviewsScreen(Screen):
             return
 
         status.update(f"[dim]showing {len(shown)} of {len(self.modules)} modules[/dim]")
+        full = self.filter_state.module_code is not None
         await stream.mount_all(
-            Static(_render_module(m), markup=True, classes="module-block")
+            Static(_render_module(m, full=full), markup=True, classes="module-block")
             for m in shown
         )
 
