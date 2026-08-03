@@ -1,6 +1,9 @@
 """Parse a NUSMods planner export into an ordered, deduped module list."""
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from nuscrool.models import PlannerEntry
 
 _SEM_SUFFIX = {1: "S1", 2: "S2", 3: "ST1", 4: "ST2"}
@@ -48,3 +51,14 @@ def parse_planner(data: dict) -> list[PlannerEntry]:
             best[entry.module_code] = entry
 
     return sorted(best.values(), key=lambda e: e.sort_key)
+
+
+def remove_module(path: str, module_code: str) -> None:
+    """Drop every entry for module_code from the planner file's modules map."""
+    planner_file = Path(path)
+    data = json.loads(planner_file.read_text())
+    modules = data.get("modules", {})
+    data["modules"] = {
+        key: entry for key, entry in modules.items() if entry.get("moduleCode") != module_code
+    }
+    planner_file.write_text(json.dumps(data, indent=2))

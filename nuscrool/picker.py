@@ -58,13 +58,11 @@ class PickerScreen(Screen):
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("d", "delete_selected", "Delete"),
-        ("r", "repoint_missing", "Re-point"),
     ]
 
     def __init__(self, error: str | None = None):
         super().__init__()
         self._profiles: list[profiles_mod.Profile] = []
-        self._missing: profiles_mod.Profile | None = None
         self._error = error
 
     def compose(self) -> ComposeResult:
@@ -81,7 +79,6 @@ class PickerScreen(Screen):
 
     async def _reload(self) -> None:
         self._profiles = profiles_mod.list_profiles()
-        self._missing = None
         list_view = self.query_one("#profile-list", ListView)
         await list_view.clear()
         for i, p in enumerate(self._profiles):
@@ -91,6 +88,7 @@ class PickerScreen(Screen):
                 ListItem(Label(f"{p.name}  [dim]{p.path}[/dim]{tag}"), id=f"profile-{i}")
             )
         list_view.append(ListItem(Label("[ Browse for file… ]"), id="browse"))
+        list_view.index = 0
         self.query_one("#status", Label).update("")
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
@@ -105,10 +103,8 @@ class PickerScreen(Screen):
             profiles_mod.touch_profile(profile.name, time.time())
             self._launch(profile.path)
         else:
-            self._missing = profile
             self.query_one("#status", Label).update(
-                f"[red]'{profile.name}' file not found.[/red] "
-                "Press r to browse a new location, d to delete."
+                f"[red]'{profile.name}' file not found.[/red] Press d to delete."
             )
 
     def _browse_native(self) -> None:
@@ -124,8 +120,6 @@ class PickerScreen(Screen):
     def _handle_browsed(self, path: str | None) -> None:
         if path is None:
             return
-        if self._missing is not None:
-            profiles_mod.update_path(self._missing.name, path, time.time())
         self._launch(path)
 
     def _launch(self, path: str) -> None:
@@ -143,10 +137,6 @@ class PickerScreen(Screen):
         index = int(item_id.removeprefix("profile-"))
         profiles_mod.remove_profile(self._profiles[index].name)
         await self._reload()
-
-    def action_repoint_missing(self) -> None:
-        if self._missing is not None:
-            self._browse_native()
 
     def action_quit(self) -> None:
         self.app.exit()
