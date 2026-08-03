@@ -1,3 +1,6 @@
+import json
+import tempfile
+
 import pytest
 from textual.app import App, ComposeResult
 from textual.widgets import ListView, SelectionList, Static
@@ -14,13 +17,29 @@ def _mods():
     ]
 
 
+def _planner_path(modules) -> str:
+    """Write a planner JSON whose moduleCodes match the given ModuleReviews list."""
+    data = {
+        "minYear": "2026/2027",
+        "modules": {
+            f"m{i}": {"moduleCode": m.module_code, "year": "2026/2027", "semester": 1}
+            for i, m in enumerate(modules)
+        },
+    }
+    fd, path = tempfile.mkstemp(suffix=".json")
+    with open(fd, "w") as f:
+        json.dump(data, f)
+    return path
+
+
 class _Harness(App):
-    def __init__(self, modules):
+    def __init__(self, modules, path=None):
         super().__init__()
         self.modules = modules
+        self.path = path or _planner_path(modules)
 
     def on_mount(self) -> None:
-        self.push_screen(ReviewsScreen(self.modules))
+        self.push_screen(ReviewsScreen(self.modules, self.path))
 
 
 def _stream_content(app) -> str:
@@ -166,3 +185,75 @@ async def test_q_binding_quits_app():
         await pilot.pause()
 
         assert app.return_code == 0
+
+
+@pytest.mark.asyncio
+async def test_delete_module_removes_from_list_stream_and_json():
+    mods = _mods()
+    path = _planner_path(mods)
+    app = _Harness(mods, path=path)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        module_list = app.screen.query_one("#module-list", ListView)
+        module_list.focus()
+        module_list.index = [i.id for i in module_list.children].index("mod-CS2100")
+        await pilot.pause()
+
+        await pilot.press("d")
+        await pilot.pause()
+
+        content = _stream_content(app)
+        assert "CS2100" not in content
+        assert "MA1521" in content
+        assert "CS2251" in content
+
+        ids = [i.id for i in module_list.children]
+        assert "mod-CS2100" not in ids
+
+        saved = json.loads(open(path).read())
+        codes = {m["moduleCode"] for m in saved["modules"].values()}
+        assert codes == {"MA1521", "CS2251"}
+
+
+@pytest.mark.asyncio
+async def test_delete_module_noop_when_all_is_highlighted():
+    mods = _mods()
+    path = _planner_path(mods)
+    app = _Harness(mods, path=path)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        module_list = app.screen.query_one("#module-list", ListView)
+        assert module_list.index == 0  # "All" item
+
+        await pilot.press("d")
+        await pilot.pause()
+
+        content = _stream_content(app)
+        assert "CS2100" in content
+        saved = json.loads(open(path).read())
+        codes = {m["moduleCode"] for m in saved["modules"].values()}
+        assert codes == {"CS2100", "MA1521", "CS2251"}
+
+
+@pytest.mark.asyncio
+async def test_delete_module_while_jumped_to_it_falls_back_to_all():
+    mods = _mods()
+    path = _planner_path(mods)
+    app = _Harness(mods, path=path)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        module_list = app.screen.query_one("#module-list", ListView)
+        module_list.focus()
+        module_list.index = [i.id for i in module_list.children].index("mod-CS2100")
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+        assert _stream_content(app).count("Comp Org") == 1
+
+        await pilot.press("d")
+        await pilot.pause()
+
+        content = _stream_content(app)
+        assert "CS2100" not in content
+        assert "MA1521" in content
+        assert "CS2251" in content

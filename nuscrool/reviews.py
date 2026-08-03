@@ -15,6 +15,7 @@ from nuscrool.filters import (
     semester_labels,
 )
 from nuscrool.models import ModuleReviews
+from nuscrool.planner import remove_module
 
 
 def _render_module(m: ModuleReviews) -> str:
@@ -45,11 +46,13 @@ class ReviewsScreen(Screen):
         ("q", "quit", "Quit"),
         ("f", "focus_filters", "Filters"),
         ("c", "clear_filters", "Clear filters"),
+        ("d", "delete_module", "Delete mod"),
     ]
 
-    def __init__(self, modules: list[ModuleReviews]):
+    def __init__(self, modules: list[ModuleReviews], path: str):
         super().__init__()
         self.modules = modules
+        self.path = path
         self.filter_state = FilterState()
 
     def compose(self) -> ComposeResult:
@@ -126,6 +129,23 @@ class ReviewsScreen(Screen):
 
     def action_quit(self) -> None:
         self.app.exit()
+
+    async def action_delete_module(self) -> None:
+        module_list = self.query_one("#module-list", ListView)
+        if module_list.index is None:
+            return
+        item_id = module_list.children[module_list.index].id or ""
+        if not item_id.startswith("mod-"):
+            return
+        code = item_id.removeprefix("mod-")
+
+        self.modules = [m for m in self.modules if m.module_code != code]
+        remove_module(self.path, code)
+        await module_list.pop(module_list.index)
+
+        if self.filter_state.module_code == code:
+            self.filter_state = FilterState()
+        await self._refresh_stream()
 
     def action_focus_filters(self) -> None:
         self.query_one("#f-sem", SelectionList).focus()

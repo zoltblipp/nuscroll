@@ -84,7 +84,7 @@ class LoadingScreen(Screen):
     def _show_reviews(self, modules) -> None:
         from nuscrool.reviews import ReviewsScreen
 
-        self.app.switch_screen(ReviewsScreen(modules))
+        self.app.switch_screen(ReviewsScreen(modules, self.path))
 
     def _fail(self, message: str) -> None:
         self.app.call_from_thread(self._show_failure, message)
