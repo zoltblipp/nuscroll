@@ -124,6 +124,9 @@ class ReviewsScreen(Screen):
             )
         await self._refresh_stream()
 
+    def action_quit(self) -> None:
+        self.app.exit()
+
     def action_focus_filters(self) -> None:
         self.query_one("#f-sem", SelectionList).focus()
 
