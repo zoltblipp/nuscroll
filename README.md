@@ -48,9 +48,17 @@ nuscroll path/to/planner.json      # or: nuscroll --file path/to/planner.json
 nuscroll --refresh planner.json    # ignore cache, re-fetch all modules
 ```
 
-If you omit the path, NUScroll opens a picker: pick a previously used planner
-from the list, or browse for a new file via a native OS file dialog. Files you
-open this way are remembered as profiles for next time.
+### Zero-arg launch
+
+```bash
+nuscroll
+```
+
+No path needed after the first run. Bare `nuscroll` opens a picker: pick a
+previously used planner from the list, or browse for a new file via a native
+OS file dialog. Any planner you open — whether passed as an argument or
+picked via browse — is remembered as a profile, so every run after the first
+is just `nuscroll`.
 
 ### Keys
 
