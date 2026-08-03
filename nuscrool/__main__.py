@@ -1,16 +1,11 @@
-"""NUScrool entrypoint: wire planner, reviews, and the TUI together."""
+"""NUScrool entrypoint: parse args, ensure an API key, launch the TUI."""
 from __future__ import annotations
 
 import argparse
-import json
 import sys
-import time
-from pathlib import Path
 
-from nuscrool import config, metadata
+from nuscrool import config
 from nuscrool.app import NUScroolApp
-from nuscrool.loader import build_module_reviews
-from nuscrool.planner import parse_planner
 
 _REGISTER_URL = "https://disqus.com/api/applications/"
 
@@ -23,12 +18,9 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def resolve_planner_path(argv: list[str], input_fn=input) -> str:
+def resolve_planner_path(argv: list[str]) -> str | None:
     known, _ = _build_arg_parser().parse_known_args(argv)
-    path = known.file or known.positional
-    if not path:
-        path = input_fn("Path to NUSMods planner JSON: ").strip()
-    return path
+    return known.file or known.positional
 
 
 def ensure_api_key(input_fn=input, get=config.get_api_key, set_=config.set_api_key) -> str:
@@ -44,36 +36,10 @@ def ensure_api_key(input_fn=input, get=config.get_api_key, set_=config.set_api_k
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     refresh = _build_arg_parser().parse_known_args(argv)[0].refresh
-
     path = resolve_planner_path(argv)
-    planner_file = Path(path)
-    if not planner_file.is_file():
-        print(f"Planner file not found: {path}")
-        return 1
-
-    try:
-        data = json.loads(planner_file.read_text())
-        entries = parse_planner(data)
-    except (json.JSONDecodeError, ValueError) as exc:
-        print(f"Could not parse planner: {exc}")
-        return 1
-
-    if not entries:
-        print("No modules found in planner.")
-        return 1
 
     key = ensure_api_key()
-    now = time.time()
-    acad_year = metadata.acad_year_from_min(data["minYear"])
-    titles = metadata.fetch_titles(acad_year, now=now)
-
-    def progress(i, total, code):
-        print(f"[{i + 1}/{total}] fetching {code}...", flush=True)
-
-    modules = build_module_reviews(
-        entries, titles, key, now=now, force=refresh, progress=progress
-    )
-    NUScroolApp(modules).run()
+    NUScroolApp(initial_path=path, refresh=refresh, api_key=key).run()
     return 0
 
 

@@ -28,3 +28,13 @@ def set_api_key(key: str) -> None:
     data = _read()
     data["apiKey"] = key
     _config_path().write_text(json.dumps(data, indent=2))
+
+
+def get_profiles() -> list[dict]:
+    return _read().get("profiles", [])
+
+
+def set_profiles(profiles: list[dict]) -> None:
+    data = _read()
+    data["profiles"] = profiles
+    _config_path().write_text(json.dumps(data, indent=2))
