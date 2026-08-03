@@ -155,3 +155,14 @@ async def test_f_binding_focuses_semester_filter():
         await pilot.pause()
 
         assert sem_list.has_focus
+
+
+@pytest.mark.asyncio
+async def test_q_binding_quits_app():
+    app = _Harness(_mods())
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        await pilot.press("q")
+        await pilot.pause()
+
+        assert app.return_code == 0
