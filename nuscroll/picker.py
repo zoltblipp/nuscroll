@@ -17,19 +17,28 @@ from nuscroll import profiles as profiles_mod
 # with Textual's asyncio loop (in-process tkinter deadlocked on macOS). Also
 # activates itself via osascript so the dialog opens frontmost, since a
 # background subprocess doesn't get window focus by default on macOS.
+#
+# Activation order matters: osascript needs a real Cocoa app registered for
+# this pid to bring forward, and that registration only happens once Tk()
+# is constructed -- activating before that point targets a process System
+# Events can't find a window for. Re-asserting focus_force() again right
+# before the dialog opens also guards against the terminal stealing focus
+# back during the gap between activation and the dialog actually mapping.
 _HELPER_SRC = """
 import os, sys, subprocess
+import tkinter as tk
+from tkinter import filedialog
+root = tk.Tk()
+root.withdraw()
+root.attributes("-topmost", True)
 if sys.platform == "darwin":
     subprocess.run([
         "osascript", "-e",
         'tell application "System Events" to set frontmost of every process '
         f'whose unix id is {os.getpid()} to true',
     ])
-import tkinter as tk
-from tkinter import filedialog
-root = tk.Tk()
-root.withdraw()
-root.attributes("-topmost", True)
+root.lift()
+root.focus_force()
 path = filedialog.askopenfilename(
     initialdir=sys.argv[1],
     title="Pick a planner JSON file",
