@@ -3,11 +3,11 @@ from __future__ import annotations
 
 from textual.app import App
 
-from nuscrool.loading import LoadingScreen
-from nuscrool.picker import PickerScreen
+from nuscroll.loading import LoadingScreen
+from nuscroll.picker import PickerScreen
 
 
-class NUScroolApp(App):
+class NUScrollApp(App):
     def __init__(self, *, initial_path: str | None, refresh: bool, api_key: str):
         super().__init__()
         self.initial_path = initial_path

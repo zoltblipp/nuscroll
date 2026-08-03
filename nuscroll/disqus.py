@@ -7,7 +7,7 @@ import urllib.request
 from html import unescape
 from html.parser import HTMLParser
 
-from nuscrool.models import Review
+from nuscroll.models import Review
 
 _API = "https://disqus.com/api/3.0/threads/listPosts.json"
 _BREAK_TAGS = {"br", "p", "div"}

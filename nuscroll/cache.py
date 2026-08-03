@@ -1,15 +1,15 @@
-"""Per-module review cache with TTL under ~/.nuscrool/cache/."""
+"""Per-module review cache with TTL under ~/.nuscroll/cache/."""
 from __future__ import annotations
 
 import json
 from dataclasses import asdict
 
-from nuscrool.models import Review
-from nuscrool.paths import nuscrool_home
+from nuscroll.models import Review
+from nuscroll.paths import nuscroll_home
 
 
 def _cache_dir():
-    d = nuscrool_home() / "cache"
+    d = nuscroll_home() / "cache"
     d.mkdir(parents=True, exist_ok=True)
     return d
 

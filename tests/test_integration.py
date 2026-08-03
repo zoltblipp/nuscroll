@@ -1,18 +1,18 @@
-"""End-to-end pilot tests wiring NUScroolApp -> LoadingScreen -> ReviewsScreen/PickerScreen."""
+"""End-to-end pilot tests wiring NUScrollApp -> LoadingScreen -> ReviewsScreen/PickerScreen."""
 import json
 
 import pytest
 from textual.widgets import Label, ListView, SelectionList, Static
 
-from nuscrool.app import NUScroolApp
-from nuscrool.loading import LoadingScreen
-from nuscrool.picker import PickerScreen
-from nuscrool.reviews import ReviewsScreen
+from nuscroll.app import NUScrollApp
+from nuscroll.loading import LoadingScreen
+from nuscroll.picker import PickerScreen
+from nuscroll.reviews import ReviewsScreen
 
 
 @pytest.fixture
 def home(tmp_path, monkeypatch):
-    monkeypatch.setenv("NUSCROOL_HOME", str(tmp_path))
+    monkeypatch.setenv("NUSCROLL_HOME", str(tmp_path))
     return tmp_path
 
 
@@ -37,9 +37,9 @@ async def test_explicit_path_flows_through_loading_into_reviews(
     home, tmp_path, monkeypatch
 ):
     plan = _write_planner(tmp_path)
-    monkeypatch.setattr("nuscrool.loading.metadata.fetch_titles", lambda *a, **k: {})
+    monkeypatch.setattr("nuscroll.loading.metadata.fetch_titles", lambda *a, **k: {})
     monkeypatch.setattr(
-        "nuscrool.loading.build_module_reviews",
+        "nuscroll.loading.build_module_reviews",
         lambda entries, titles, key, **k: [
             type("M", (), {"module_code": e.module_code, "title": "", "label": e.label,
                             "reviews": [], "error": None})()
@@ -47,7 +47,7 @@ async def test_explicit_path_flows_through_loading_into_reviews(
         ],
     )
 
-    app = NUScroolApp(initial_path=str(plan), refresh=False, api_key="KEY")
+    app = NUScrollApp(initial_path=str(plan), refresh=False, api_key="KEY")
     async with app.run_test() as pilot:
         await pilot.pause()
         await app.workers.wait_for_complete()
@@ -65,9 +65,9 @@ async def test_explicit_path_flows_through_loading_into_reviews(
 async def test_zero_arg_picker_to_native_browse_roundtrip(home, tmp_path, monkeypatch):
     monkeypatch.setattr(LoadingScreen, "_load", lambda self: None)
     plan = _write_planner(tmp_path)
-    monkeypatch.setattr("nuscrool.picker._pick_file_native", lambda start: str(plan))
+    monkeypatch.setattr("nuscroll.picker._pick_file_native", lambda start: str(plan))
 
-    app = NUScroolApp(initial_path=None, refresh=False, api_key="KEY")
+    app = NUScrollApp(initial_path=None, refresh=False, api_key="KEY")
     async with app.run_test() as pilot:
         await pilot.pause()
         assert isinstance(app.screen, PickerScreen)
@@ -90,7 +90,7 @@ async def test_zero_arg_picker_to_native_browse_roundtrip(home, tmp_path, monkey
 
 @pytest.mark.asyncio
 async def test_missing_initial_path_falls_back_to_picker_with_error(home):
-    app = NUScroolApp(initial_path="/nowhere/plan.json", refresh=False, api_key="KEY")
+    app = NUScrollApp(initial_path="/nowhere/plan.json", refresh=False, api_key="KEY")
     async with app.run_test() as pilot:
         await pilot.pause()
         await app.workers.wait_for_complete()

@@ -4,10 +4,10 @@ from __future__ import annotations
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from nuscrool import cache as cache_mod
-from nuscrool import disqus
-from nuscrool.disqus import DisqusError
-from nuscrool.models import ModuleReviews, PlannerEntry, Review
+from nuscroll import cache as cache_mod
+from nuscroll import disqus
+from nuscroll.disqus import DisqusError
+from nuscroll.models import ModuleReviews, PlannerEntry, Review
 
 _STALE_TTL = 10**9  # accept any cached age as fallback on fetch failure
 _MAX_WORKERS = 8  # bounded so we don't hammer the Disqus API with 40+ requests at once

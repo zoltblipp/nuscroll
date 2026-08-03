@@ -6,7 +6,7 @@ from textual.containers import Horizontal, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Footer, Header, Label, ListItem, ListView, SelectionList, Static
 
-from nuscrool.filters import (
+from nuscroll.filters import (
     FilterState,
     apply_filters,
     available_levels,
@@ -14,8 +14,8 @@ from nuscrool.filters import (
     level_label,
     semester_labels,
 )
-from nuscrool.models import ModuleReviews
-from nuscrool.planner import remove_module
+from nuscroll.models import ModuleReviews
+from nuscroll.planner import remove_module
 
 
 def _render_module(m: ModuleReviews) -> str:

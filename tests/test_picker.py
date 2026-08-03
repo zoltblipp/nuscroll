@@ -2,14 +2,14 @@ import pytest
 from textual.app import App
 from textual.widgets import Label, ListView
 
-from nuscrool import profiles
-from nuscrool.loading import LoadingScreen
-from nuscrool.picker import PickerScreen
+from nuscroll import profiles
+from nuscroll.loading import LoadingScreen
+from nuscroll.picker import PickerScreen
 
 
 @pytest.fixture
 def home(tmp_path, monkeypatch):
-    monkeypatch.setenv("NUSCROOL_HOME", str(tmp_path))
+    monkeypatch.setenv("NUSCROLL_HOME", str(tmp_path))
     return tmp_path
 
 
@@ -127,7 +127,7 @@ async def test_browse_opens_native_dialog_and_launches_loading(
     monkeypatch.setattr(LoadingScreen, "_load", lambda self: None)
     plan = tmp_path / "chosen.json"
     plan.write_text("{}")
-    monkeypatch.setattr("nuscrool.picker._pick_file_native", lambda start: str(plan))
+    monkeypatch.setattr("nuscroll.picker._pick_file_native", lambda start: str(plan))
 
     app = _Harness()
     async with app.run_test() as pilot:
@@ -148,7 +148,7 @@ async def test_browse_opens_native_dialog_and_launches_loading(
 
 @pytest.mark.asyncio
 async def test_browse_cancelled_stays_on_picker(home, monkeypatch):
-    monkeypatch.setattr("nuscrool.picker._pick_file_native", lambda start: None)
+    monkeypatch.setattr("nuscroll.picker._pick_file_native", lambda start: None)
 
     app = _Harness()
     async with app.run_test() as pilot:

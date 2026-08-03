@@ -2,12 +2,12 @@ import json
 
 import pytest
 
-from nuscrool import profiles
+from nuscroll import profiles
 
 
 @pytest.fixture
 def home(tmp_path, monkeypatch):
-    monkeypatch.setenv("NUSCROOL_HOME", str(tmp_path))
+    monkeypatch.setenv("NUSCROLL_HOME", str(tmp_path))
     return tmp_path
 
 

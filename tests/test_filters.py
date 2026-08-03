@@ -1,4 +1,4 @@
-from nuscrool.filters import (
+from nuscroll.filters import (
     FilterState,
     apply_filters,
     available_levels,
@@ -8,7 +8,7 @@ from nuscrool.filters import (
     module_prefix,
     semester_labels,
 )
-from nuscrool.models import ModuleReviews
+from nuscroll.models import ModuleReviews
 
 
 def _mods():

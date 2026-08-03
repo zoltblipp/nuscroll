@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from nuscrool.models import ModuleReviews
+from nuscroll.models import ModuleReviews
 
 _CODE_RE = re.compile(r"^([A-Z]+)(\d)")
 

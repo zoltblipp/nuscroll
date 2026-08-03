@@ -11,7 +11,7 @@ from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Footer, Header, Label, ListItem, ListView
 
-from nuscrool import profiles as profiles_mod
+from nuscroll import profiles as profiles_mod
 
 # Runs Tk in its own process so its Cocoa/Tcl run loop never shares a thread
 # with Textual's asyncio loop (in-process tkinter deadlocked on macOS). Also
@@ -123,7 +123,7 @@ class PickerScreen(Screen):
         self._launch(path)
 
     def _launch(self, path: str) -> None:
-        from nuscrool.loading import LoadingScreen
+        from nuscroll.loading import LoadingScreen
 
         self.app.push_screen(LoadingScreen(path))
 
