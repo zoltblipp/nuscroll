@@ -3,14 +3,14 @@ import json
 import pytest
 from textual.app import App
 
-from nuscrool.loading import LoadingScreen
-from nuscrool.picker import PickerScreen
-from nuscrool.reviews import ReviewsScreen
+from nuscroll.loading import LoadingScreen
+from nuscroll.picker import PickerScreen
+from nuscroll.reviews import ReviewsScreen
 
 
 @pytest.fixture
 def home(tmp_path, monkeypatch):
-    monkeypatch.setenv("NUSCROOL_HOME", str(tmp_path))
+    monkeypatch.setenv("NUSCROLL_HOME", str(tmp_path))
     return tmp_path
 
 
@@ -76,10 +76,10 @@ async def test_valid_planner_switches_to_reviews_and_saves_profile(
     )
 
     monkeypatch.setattr(
-        "nuscrool.loading.metadata.fetch_titles", lambda *a, **k: {}
+        "nuscroll.loading.metadata.fetch_titles", lambda *a, **k: {}
     )
     monkeypatch.setattr(
-        "nuscrool.loading.build_module_reviews",
+        "nuscroll.loading.build_module_reviews",
         lambda *a, **k: [],
     )
 
@@ -90,7 +90,7 @@ async def test_valid_planner_switches_to_reviews_and_saves_profile(
         await pilot.pause()
         assert isinstance(app.screen, ReviewsScreen)
 
-    from nuscrool import profiles
+    from nuscroll import profiles
 
     saved = profiles.list_profiles()
     assert len(saved) == 1

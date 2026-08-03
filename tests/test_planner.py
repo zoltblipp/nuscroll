@@ -1,6 +1,6 @@
 import pytest
 
-from nuscrool.planner import parse_planner
+from nuscroll.planner import parse_planner
 
 SAMPLE = {
     "minYear": "2026/2027",

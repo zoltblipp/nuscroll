@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from nuscrool import config
+from nuscroll import config
 
 
 @dataclass(frozen=True)

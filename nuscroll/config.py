@@ -1,13 +1,13 @@
-"""Persist the Disqus public API key under ~/.nuscrool/config.json."""
+"""Persist the Disqus public API key under ~/.nuscroll/config.json."""
 from __future__ import annotations
 
 import json
 
-from nuscrool.paths import nuscrool_home
+from nuscroll.paths import nuscroll_home
 
 
 def _config_path():
-    return nuscrool_home() / "config.json"
+    return nuscroll_home() / "config.json"
 
 
 def _read() -> dict:

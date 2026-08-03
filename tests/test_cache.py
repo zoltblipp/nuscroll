@@ -1,12 +1,12 @@
 import pytest
 
-from nuscrool import cache
-from nuscrool.models import Review
+from nuscroll import cache
+from nuscroll.models import Review
 
 
 @pytest.fixture
 def home(tmp_path, monkeypatch):
-    monkeypatch.setenv("NUSCROOL_HOME", str(tmp_path))
+    monkeypatch.setenv("NUSCROLL_HOME", str(tmp_path))
     return tmp_path
 
 

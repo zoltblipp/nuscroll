@@ -5,8 +5,8 @@ import pytest
 from textual.app import App, ComposeResult
 from textual.widgets import ListView, SelectionList, Static
 
-from nuscrool.models import ModuleReviews, Review
-from nuscrool.reviews import ReviewsScreen
+from nuscroll.models import ModuleReviews, Review
+from nuscroll.reviews import ReviewsScreen
 
 
 def _mods():

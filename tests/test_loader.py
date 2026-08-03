@@ -2,9 +2,9 @@ import json
 
 import pytest
 
-from nuscrool import loader
-from nuscrool.disqus import DisqusError
-from nuscrool.models import PlannerEntry, Review
+from nuscroll import loader
+from nuscroll.disqus import DisqusError
+from nuscroll.models import PlannerEntry, Review
 
 
 def _entry(code, label="Y1S1"):

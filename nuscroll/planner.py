@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from nuscrool.models import PlannerEntry
+from nuscroll.models import PlannerEntry
 
 _SEM_SUFFIX = {1: "S1", 2: "S2", 3: "ST1", 4: "ST2"}
 

@@ -1,7 +1,7 @@
 import pytest
 
-from nuscrool import disqus
-from nuscrool.disqus import DisqusError, fetch_reviews, html_to_text
+from nuscroll import disqus
+from nuscroll.disqus import DisqusError, fetch_reviews, html_to_text
 
 
 def test_html_to_text_basic():

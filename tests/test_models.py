@@ -1,7 +1,7 @@
 import os
 
-from nuscrool import models
-from nuscrool.paths import nuscrool_home
+from nuscroll import models
+from nuscroll.paths import nuscroll_home
 
 
 def test_models_construct():
@@ -14,19 +14,19 @@ def test_models_construct():
     assert mr.error is None
 
 
-def test_nuscrool_home_respects_env(tmp_path):
-    os.environ["NUSCROOL_HOME"] = str(tmp_path / "home")
+def test_nuscroll_home_respects_env(tmp_path):
+    os.environ["NUSCROLL_HOME"] = str(tmp_path / "home")
     try:
-        home = nuscrool_home()
+        home = nuscroll_home()
         assert home == tmp_path / "home"
         assert home.is_dir()
     finally:
-        del os.environ["NUSCROOL_HOME"]
+        del os.environ["NUSCROLL_HOME"]
 
 
-def test_nuscrool_home_defaults_to_dotfile(monkeypatch, tmp_path):
-    monkeypatch.delenv("NUSCROOL_HOME", raising=False)
-    monkeypatch.setattr("nuscrool.paths.Path.home", lambda: tmp_path)
-    home = nuscrool_home()
-    assert home == tmp_path / ".nuscrool"
+def test_nuscroll_home_defaults_to_dotfile(monkeypatch, tmp_path):
+    monkeypatch.delenv("NUSCROLL_HOME", raising=False)
+    monkeypatch.setattr("nuscroll.paths.Path.home", lambda: tmp_path)
+    home = nuscroll_home()
+    assert home == tmp_path / ".nuscroll"
     assert home.is_dir()

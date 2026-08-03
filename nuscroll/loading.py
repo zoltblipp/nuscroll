@@ -11,10 +11,10 @@ from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import Footer, Header, Label, ProgressBar
 
-from nuscrool import metadata
-from nuscrool.loader import build_module_reviews
-from nuscrool.planner import parse_planner
-from nuscrool.profiles import add_profile
+from nuscroll import metadata
+from nuscroll.loader import build_module_reviews
+from nuscroll.planner import parse_planner
+from nuscroll.profiles import add_profile
 
 
 class LoadingScreen(Screen):
@@ -82,7 +82,7 @@ class LoadingScreen(Screen):
         self.query_one("#loading-status", Label).update(text)
 
     def _show_reviews(self, modules) -> None:
-        from nuscrool.reviews import ReviewsScreen
+        from nuscroll.reviews import ReviewsScreen
 
         self.app.switch_screen(ReviewsScreen(modules, self.path))
 
@@ -90,6 +90,6 @@ class LoadingScreen(Screen):
         self.app.call_from_thread(self._show_failure, message)
 
     def _show_failure(self, message: str) -> None:
-        from nuscrool.picker import PickerScreen
+        from nuscroll.picker import PickerScreen
 
         self.app.switch_screen(PickerScreen(error=message))

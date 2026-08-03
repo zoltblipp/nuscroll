@@ -2,12 +2,12 @@ import os
 
 import pytest
 
-from nuscrool import config
+from nuscroll import config
 
 
 @pytest.fixture
 def home(tmp_path, monkeypatch):
-    monkeypatch.setenv("NUSCROOL_HOME", str(tmp_path))
+    monkeypatch.setenv("NUSCROLL_HOME", str(tmp_path))
     return tmp_path
 
 

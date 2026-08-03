@@ -1,4 +1,4 @@
-# NUScrool
+# NUScroll
 
 Scroll NUS course reviews in your terminal, sorted by module, filtered by module or semester.
 
@@ -14,14 +14,14 @@ python3 -m venv .venv
 
 ## Disqus API key (one-time)
 
-NUScrool reads reviews via the Disqus API, which needs a free public key:
+NUScroll reads reviews via the Disqus API, which needs a free public key:
 
 1. Go to <https://disqus.com/api/applications/> and register an application.
 2. Copy the **public key**.
-3. Run `nuscrool` — it will prompt for the key on first run and store it in
-   `~/.nuscrool/config.json`.
+3. Run `nuscroll` — it will prompt for the key on first run and store it in
+   `~/.nuscroll/config.json`.
 
-   Note: the key is stored in plaintext at `~/.nuscrool/config.json`. This is fine
+   Note: the key is stored in plaintext at `~/.nuscroll/config.json`. This is fine
    because it's a public, read-only API key, not a secret credential.
 
 ## Get your planner JSON
@@ -32,11 +32,11 @@ On <https://nusmods.com> open the **Planner**, then export/download your plan as
 ## Usage
 
 ```bash
-nuscrool path/to/planner.json      # or: nuscrool --file path/to/planner.json
-nuscrool --refresh planner.json    # ignore cache, re-fetch all modules
+nuscroll path/to/planner.json      # or: nuscroll --file path/to/planner.json
+nuscroll --refresh planner.json    # ignore cache, re-fetch all modules
 ```
 
-If you omit the path, NUScrool prompts for it.
+If you omit the path, NUScroll prompts for it.
 
 ### Keys
 
@@ -44,4 +44,4 @@ If you omit the path, NUScrool prompts for it.
 - `f` — focus the filter sidebar (pick a semester like `Y1S1`, or a single module)
 - `q` — quit
 
-Reviews are cached for 24h under `~/.nuscrool/cache/` to minimise Disqus calls.
+Reviews are cached for 24h under `~/.nuscroll/cache/` to minimise Disqus calls.

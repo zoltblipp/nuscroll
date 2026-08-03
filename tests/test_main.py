@@ -2,12 +2,12 @@ import json
 
 import pytest
 
-from nuscrool import __main__ as cli
+from nuscroll import __main__ as cli
 
 
 @pytest.fixture
 def home(tmp_path, monkeypatch):
-    monkeypatch.setenv("NUSCROOL_HOME", str(tmp_path))
+    monkeypatch.setenv("NUSCROLL_HOME", str(tmp_path))
     (tmp_path / "config.json").write_text(json.dumps({"apiKey": "TESTKEY"}))
     return tmp_path
 
@@ -25,7 +25,7 @@ class _FakeApp:
 @pytest.fixture(autouse=True)
 def fake_app(monkeypatch):
     _FakeApp.last_kwargs = None
-    monkeypatch.setattr(cli, "NUScroolApp", _FakeApp)
+    monkeypatch.setattr(cli, "NUScrollApp", _FakeApp)
     return _FakeApp
 
 

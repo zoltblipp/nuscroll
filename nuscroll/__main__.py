@@ -1,17 +1,17 @@
-"""NUScrool entrypoint: parse args, ensure an API key, launch the TUI."""
+"""NUScroll entrypoint: parse args, ensure an API key, launch the TUI."""
 from __future__ import annotations
 
 import argparse
 import sys
 
-from nuscrool import config
-from nuscrool.app import NUScroolApp
+from nuscroll import config
+from nuscroll.app import NUScrollApp
 
 _REGISTER_URL = "https://disqus.com/api/applications/"
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="nuscrool", add_help=False)
+    parser = argparse.ArgumentParser(prog="nuscroll", add_help=False)
     parser.add_argument("--file", dest="file")
     parser.add_argument("positional", nargs="?")
     parser.add_argument("--refresh", action="store_true")
@@ -39,7 +39,7 @@ def main(argv: list[str] | None = None) -> int:
     path = resolve_planner_path(argv)
 
     key = ensure_api_key()
-    NUScroolApp(initial_path=path, refresh=refresh, api_key=key).run()
+    NUScrollApp(initial_path=path, refresh=refresh, api_key=key).run()
     return 0
 
 
