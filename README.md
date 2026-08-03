@@ -1,5 +1,7 @@
 # NUScroll
 
+![NUScroll](NUScroll%20cover%20page.png)
+
 Scroll NUS course reviews in your terminal, sorted by module, filtered by module or semester.
 
 Reviews come from the Disqus threads that power the "Reviews" section on
